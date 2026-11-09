@@ -129,6 +129,14 @@ Full uninstall removes only the registered local `ndd.prefix` value when it stil
 matches. Failed or inaccessible entries are kept with a warning, and removal
 continues. Single-agent uninstall keeps the registry and project settings.
 
+For projects with [private specs](setup.md#private-specs), full uninstall also
+removes `ndd.specsRoot`, the `ndd-specs` links in every worktree of the repository
+and the `/ndd-specs` line in `.git/info/exclude`. It then asks whether to delete
+the private specs folder permanently. Answer `y` to delete it; any other answer,
+or running without a terminal, keeps the folder and prints its path. Only a
+folder directly inside `~/.ndd/specs` is ever deleted. Preview lists these actions
+without asking or changing anything.
+
 Successful records are removed, followed by the registry folders if empty.
 Moved projects need setup again; stale records may need manual cleanup.
 `NDD_STATE_DIR` overrides `~/.ndd`; use the same value for setup and uninstall.

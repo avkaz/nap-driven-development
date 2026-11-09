@@ -50,6 +50,55 @@ function Get-SavedPrefix([string]$Common) {
     if ($code -ne 0 -and $code -ne 1) { throw "Cannot read local ndd.prefix (exit=$code)." }
     return [PSCustomObject]@{ Present=($code -eq 0); Value=($values -join "`n") }
 }
+function Get-SpecsRoot([string]$Common) {
+    $values = @(& git config --file (Join-Path $Common 'config') --no-includes --get ndd.specsRoot)
+    $code = $LASTEXITCODE
+    if ($code -eq 1) { return $null }
+    if ($code -ne 0) { throw "Cannot read local ndd.specsRoot (exit=$code)." }
+    return $values[0]
+}
+function Clear-PrivateSpecs([string]$Common) {
+    $root = Get-SpecsRoot $Common
+    if (-not $root) { return }
+    $root = [IO.Path]::GetFullPath($root)
+    $specsDir = [IO.Path]::GetFullPath((Join-Path $stateDir 'specs'))
+    # Only a folder created by setup under the NDD state directory may be deleted.
+    if ((Split-Path $root -Parent) -ne $specsDir) { throw "Private specs folder is not inside ${specsDir}: $root" }
+    Assert-RealDirectoryPath $root
+    Write-Host "Remove private specs settings (ndd.specsRoot, ndd-specs links, exclude line): $root"
+    if ($DryRun) {
+        if (Test-Path -LiteralPath $root) { Write-Host "Uninstall will ask whether to delete private specs: $root" }
+        return
+    }
+    $worktrees = @(& git "--git-dir=$Common" worktree list --porcelain)
+    if ($LASTEXITCODE -ne 0) { throw "Cannot list worktrees (exit=$LASTEXITCODE)." }
+    foreach ($line in $worktrees) {
+        if (-not $line.StartsWith('worktree ')) { continue }
+        $link = Join-Path $line.Substring(9) 'ndd-specs'
+        $entry = Get-Item -LiteralPath $link -Force -ErrorAction SilentlyContinue
+        if (-not $entry -or -not ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint)) { continue }
+        $target = @($entry.Target)[0]
+        # Non-recursive delete removes only the junction or link, never its target.
+        if ($target -and [IO.Path]::GetFullPath($target) -eq $root) { [IO.Directory]::Delete($link) }
+    }
+    $exclude = Join-Path $Common 'info/exclude'
+    if (Test-Path -LiteralPath $exclude -PathType Leaf) {
+        $lines = [IO.File]::ReadAllLines($exclude)
+        $kept = @($lines | Where-Object { $_ -cne '/ndd-specs' })
+        if ($kept.Count -ne $lines.Count) { [IO.File]::WriteAllLines($exclude, [string[]]$kept) }
+    }
+    if (Test-Path -LiteralPath $root -PathType Container) {
+        Write-Host "Delete private specs permanently? $root [y/N] " -NoNewline
+        $answer = [Console]::In.ReadLine()
+        if ($answer -eq 'y') {
+            [IO.Directory]::Delete($root, $true)
+            Write-Host "Deleted private specs: $root"
+        } else {
+            Write-Host "Kept private specs: $root"
+        }
+    }
+    $null = Invoke-GitText @('config', '--file', (Join-Path $Common 'config'), '--no-includes', '--unset-all', 'ndd.specsRoot')
+}
 function Read-Record([string]$Path) {
     $entry = Get-Item -LiteralPath $Path -Force
     if ($entry.PSIsContainer -or ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw "Invalid record: $Path" }
@@ -111,6 +160,7 @@ try {
         try {
             $record = Read-Record $entry.FullName
             Assert-GitDirectory $record.Common
+            Clear-PrivateSpecs $record.Common
             $saved = Get-SavedPrefix $record.Common
             if ($saved.Present -and $saved.Value -cne $record.Prefix) { throw "Prefix changed: $($record.Project)" }
             Write-Host "Remove registered ndd.prefix=$($record.Prefix): $($record.Project)"
@@ -125,7 +175,13 @@ try {
             Write-Warning "Project cleanup skipped; retained record $($entry.FullName): $_"
         }
     }
-    if (-not $DryRun -and -not $failed) { [IO.Directory]::Delete($projectsDir) }
+    if (-not $DryRun -and -not $failed) {
+        [IO.Directory]::Delete($projectsDir)
+        $specsDir = Join-Path $stateDir 'specs'
+        if ((Test-Path -LiteralPath $specsDir) -and [IO.Directory]::GetFileSystemEntries($specsDir).Count -eq 0) {
+            [IO.Directory]::Delete($specsDir)
+        }
+    }
 } finally {
     if ($temporary) { [IO.File]::Delete($temporary) }
     if ($locked) { [IO.Directory]::Delete($lockDir) }

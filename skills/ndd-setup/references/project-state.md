@@ -13,6 +13,11 @@ see [prefixes and feature identifiers](feature-ids.md).
 
 Use the same root for setup, init, spec, plan, do and review:
 
+0. Read `git config --local --no-includes --get ndd.specsRoot`. A saved value selects
+   the [private specs](private-specs.md) folder for every command, including
+   `project/`. Report a read error or missing folder; never fall back to
+   `ndd-specs/`. If this worktree lacks the `ndd-specs` link, remind once to run
+   `ndd-setup`; do not create it.
 1. Honor an explicit safe document path or root selected by the user, and the
    project's applicable location instructions. An explicit existing task path
    selects its containing root for related project context; it does not move files.
@@ -33,7 +38,8 @@ Use the same root for setup, init, spec, plan, do and review:
 Report the selected root and reuse it within the task. Number and resolve tasks
 only in that root; do not merge roots or fall back to the other after a missing
 ID. Init's `project/` folder and overview updates use the same root as the task.
-Do not create a manifest or remember a root in new configuration. Existing
+Do not create a manifest or remember a root in new configuration; private mode's
+`ndd.specsRoot` is the only saved root. Existing
 documents, IDs, links and templates remain in place; renaming or moving them
 requires a separate explicit request.
 

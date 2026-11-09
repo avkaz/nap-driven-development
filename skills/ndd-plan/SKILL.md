@@ -77,8 +77,10 @@ existing tools. Without a chosen document language, use the user's language.
    never make up a checksum. The helpers hash the Markdown body as UTF-8/LF,
    ignoring BOM, frontmatter and trailing blank lines, with one final LF.
 7. Set the plan `status: draft`, synchronize the relevant existing overview entry,
-   and show the short plan once (or changed parts),
-   without repeating it in a summary, and ask for review. On explicit approval of
+   and do not paste the saved plan into chat. Give its path, the task count and
+   at most five short points: approach, main risks and decisions needing the user
+   (when revising, the changed parts only). Paste a section only if the user asks.
+   Ask for review. On explicit approval of
    this version, set `status: approved`.
    A chat approval is enough; the agent records it and refreshes the overview
    progress after checking plan currency. A draft plan never means ready.

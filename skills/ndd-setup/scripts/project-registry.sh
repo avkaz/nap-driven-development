@@ -104,6 +104,52 @@ if [[ "$action" == register ]]; then
   exit 0
 fi
 
+read_specs_root() {
+  local code=0
+  specs_root=$(git config --file "$1/config" --no-includes --get ndd.specsRoot) || code=$?
+  [[ $code -eq 0 || $code -eq 1 ]] || return 1
+  [[ $code -eq 0 ]] || specs_root=''
+}
+clean_private_specs() {
+  local common=$1 worktrees line link exclude answer code
+  read_specs_root "$common" || return 1
+  [[ -n "$specs_root" ]] || return 0
+  # Only a folder created by setup under the NDD state directory may be deleted.
+  if [[ "$(dirname "$specs_root")" != "$state_dir/specs" ]] || ! check_directory "$specs_root"; then
+    echo "Private specs folder is not inside $state_dir/specs; retained: $specs_root" >&2
+    return 1
+  fi
+  echo "Remove private specs settings (ndd.specsRoot, ndd-specs links, exclude line): $specs_root"
+  if [[ $dry_run -eq 1 ]]; then
+    [[ ! -d "$specs_root" ]] || echo "Uninstall will ask whether to delete private specs: $specs_root"
+    return 0
+  fi
+  worktrees=$(git --git-dir="$common" worktree list --porcelain) || return 1
+  while IFS= read -r line; do
+    [[ "$line" == 'worktree '* ]] || continue
+    link="${line#worktree }/ndd-specs"
+    if [[ -L "$link" && "$(readlink "$link")" == "$specs_root" ]]; then rm -- "$link"; fi
+  done <<< "$worktrees"
+  exclude="$common/info/exclude"
+  if [[ -f "$exclude" ]] && grep -qx '/ndd-specs' "$exclude"; then
+    code=0
+    grep -vx '/ndd-specs' "$exclude" > "$exclude.ndd-tmp" || code=$?
+    [[ $code -le 1 ]] || return 1
+    mv -f -- "$exclude.ndd-tmp" "$exclude"
+  fi
+  if [[ -d "$specs_root" ]]; then
+    printf 'Delete private specs permanently? %s [y/N] ' "$specs_root"
+    answer=''
+    read -r answer || true
+    if [[ "$answer" == y || "$answer" == Y ]]; then
+      rm -rf -- "$specs_root"
+      echo "Deleted private specs: $specs_root"
+    else
+      echo "Kept private specs: $specs_root"
+    fi
+  fi
+  git config --file "$common/config" --no-includes --unset-all ndd.specsRoot || return 1
+}
 clean_record() {
   local record=$1 project common key prefix expected
   [[ -f "$record" && ! -L "$record" ]] || return 1
@@ -113,6 +159,7 @@ clean_record() {
   [[ "$key" == ndd.prefix && "$prefix" =~ ^[a-z][a-z0-9]{1,15}$ ]] || return 1
   expected="$projects_dir/$(hash_path "$common").record"
   [[ "$record" == "$expected" ]] && check_git_dir "$common" || return 1
+  clean_private_specs "$common" || return 1
   read_prefix "$common" || return 1
   if [[ $prefix_present -eq 1 && "$saved_prefix" != "$prefix" ]]; then
     echo "Prefix changed; retained: $project" >&2
@@ -138,6 +185,7 @@ for record in "$projects_dir"/* "$projects_dir"/.[!.]* "$projects_dir"/..?*; do
 done
 if [[ $dry_run -eq 0 && $failed -eq 0 ]]; then
   rmdir "$projects_dir"
+  if [[ -d "$state_dir/specs" && -z "$(ls -A "$state_dir/specs")" ]]; then rmdir "$state_dir/specs"; fi
   rmdir "$lock_dir"; locked=0
   # Preserve unrelated contents in the common NDD state directory.
   if [[ -z "$(ls -A "$state_dir")" ]]; then rmdir "$state_dir"; fi

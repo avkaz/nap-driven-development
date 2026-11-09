@@ -2,6 +2,8 @@
 
 Save only after the user's choice, only to `review.md` in the selected feature.
 Do not write through symlinks/junctions or a linked parent, or outside that feature.
+For [private specs](../../ndd-setup/references/private-specs.md), write to the real
+folder from `ndd.specsRoot`, not through the `ndd-specs` link.
 Inspect the destination before offering save choices. Keep its observed content
 (or absence) as the baseline, then re-read immediately before writing. If it has
 changed or appeared since the choice, stop and agree on the action again; do not

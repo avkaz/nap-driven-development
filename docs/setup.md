@@ -17,7 +17,8 @@ existing project context without creating or updating it.
 
 After you confirm a prefix, setup saves `ndd.prefix` in the repository's local
 Git config and records the project and value in `~/.ndd/projects`. Both agents
-share these settings. Neither is committed or pushed.
+share these settings. Neither is committed or pushed. If you choose
+[private specs](#private-specs), setup also makes the local changes listed there.
 
 Setup creates no tracked project files, instruction blocks, templates or empty
 specs folders. Existing `AGENTS.md` and `CLAUDE.md` stay unchanged unless you
@@ -63,6 +64,37 @@ remain supported without migration. Updating NDD does not rewrite existing
 documents.
 
 If your project uses another location, provide an explicit feature path.
+
+## Private specs
+
+On the first setup in a Git repository, setup asks whether specs are **shared** or
+**private**. Shared is the default described above: specs live in `ndd-specs/`
+and are committed with the code. Choose private when you use NDD for yourself in a
+team repository and your specs must not reach the shared repository.
+
+Private mode keeps all specs in one folder outside the project,
+`~/.ndd/specs/<project>`, and makes these local changes:
+
+| Change | Where | Committed |
+|---|---|---|
+| Path to the private folder | `ndd.specsRoot` in local Git config | no |
+| `/ndd-specs` ignore line | `.git/info/exclude` (not `.gitignore`) | no |
+| `ndd-specs` link to the folder, for your editor | project root | no (ignored) |
+
+All NDD commands read and write that folder directly. Because it is outside the
+project, the same specs stay with you when you switch branches, and `git clean`
+cannot delete them. Specs are not part of your commits or pull requests.
+
+A linked worktree (`git worktree add`) shares the setting, so NDD works there at
+once; only the `ndd-specs` link is missing. Run setup in the worktree to add it.
+A new clone or computer needs setup again; it offers to reuse the existing folder.
+Setup does not install Git hooks for this, because team hook managers such as
+Husky (`core.hooksPath`) or Git LFS can silently skip or conflict with them.
+
+Projects that already commit NDD documents stay shared. Repeat setup reports the
+current mode; ask it explicitly to switch an existing project to private specs.
+Full uninstall removes the setting, links and ignore line, and asks whether to
+delete the private folder; see [uninstall](installation.md#uninstall).
 Setup reports actual conflicts with project rules and suggests a resolution;
 it does not replace those rules or change permissions to make NDD work.
 

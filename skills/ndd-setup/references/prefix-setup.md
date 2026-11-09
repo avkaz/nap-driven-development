@@ -75,7 +75,8 @@ updates a changed confirmed prefix but does not rewrite an unchanged record.
 No registry record is created for a session-only choice outside Git.
 
 Full uninstall (both agents selected) cleans these records before removing
-skills/state/source. A missing prefix is already clean; an unavailable repository,
+skills/state/source, together with each project's
+[private specs](private-specs.md) settings. A missing prefix is already clean; an unavailable repository,
 changed/multiple values, invalid record or Git write failure retains the record
 with a warning and proceeds to the next project. NDD removal continues even if
 some prefixes remain. A locked/unreadable registry or missing cleanup helper is

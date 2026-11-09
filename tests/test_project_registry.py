@@ -31,7 +31,7 @@ class ProjectRegistryTests(unittest.TestCase):
         return result
 
     def registry(self, action='register', *, project=None, prefix='ak', dry_run=False,
-                 success=True, skill=None):
+                 success=True, skill=None, answer=''):
         skill = skill or self.installer.distribution / 'skills/ndd-setup'
         if test_installers.POWERSHELL:
             command = [os.environ.get('NDD_TEST_POWERSHELL', 'powershell'), '-NoProfile',
@@ -48,12 +48,74 @@ class ProjectRegistryTests(unittest.TestCase):
             if dry_run:
                 command += ['--dry-run']
         result = subprocess.run(command, capture_output=True, text=True, errors='replace',
-                                env=child_environment(command[0]), timeout=30)
+                                input=answer, env=child_environment(command[0]), timeout=30)
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return result
 
     def records(self):
         return list((self.state / 'projects').glob('*.record'))
+
+    def link(self, path: Path, target: Path) -> None:
+        if test_installers.WINDOWS:
+            subprocess.run(['cmd', '/c', 'mklink', '/J', str(path), str(target)],
+                           check=True, capture_output=True)
+        else:
+            path.symlink_to(target)
+
+    def enable_private_specs(self, root: Path) -> Path:
+        """Set up private specs the way ndd-setup does and return the spec file."""
+        spec = root / 'ak-001-change' / 'spec.md'
+        spec.parent.mkdir(parents=True)
+        spec.write_text('private')
+        self.git('-C', str(self.project), 'config', 'ndd.specsRoot', root.as_posix())
+        exclude = self.project / '.git/info/exclude'
+        exclude.parent.mkdir(exist_ok=True)
+        exclude.write_text('*.log\n/ndd-specs\n')
+        self.link(self.project / 'ndd-specs', root)
+        return spec
+
+    def test_private_specs_cleanup_keeps_folder_without_answer(self):
+        private = self.state / 'specs' / 'project'
+        spec = self.enable_private_specs(private)
+        self.registry()
+        before = test_installers.snapshot(self.root)
+        result = self.registry('cleanup', dry_run=True)
+        self.assertIn('will ask whether to delete private specs', result.stdout)
+        self.assertEqual(test_installers.snapshot(self.root), before)
+        result = self.registry('cleanup')
+        self.assertIn('Kept private specs', result.stdout)
+        self.assertEqual(spec.read_text(), 'private')
+        self.assertFalse(os.path.lexists(self.project / 'ndd-specs'))
+        self.assertEqual((self.project / '.git/info/exclude').read_text().split(), ['*.log'])
+        result = self.git('-C', str(self.project), 'config', '--get', 'ndd.specsRoot', success=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(self.records(), [])
+
+    def test_private_specs_and_worktree_links_deleted_after_confirmation(self):
+        private = self.state / 'specs' / 'project'
+        self.enable_private_specs(private)
+        self.git('-C', str(self.project), '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid',
+                 'commit', '--quiet', '--allow-empty', '-m', 'test')
+        worktree = self.root / 'linked worktree'
+        self.git('-C', str(self.project), 'worktree', 'add', '--quiet', '--detach', str(worktree))
+        self.link(worktree / 'ndd-specs', private)
+        self.registry()
+        result = self.registry('cleanup', answer='y\n')
+        self.assertIn('Deleted private specs', result.stdout)
+        self.assertFalse(os.path.lexists(worktree / 'ndd-specs'))
+        self.assertFalse(os.path.lexists(self.project / 'ndd-specs'))
+        self.assertFalse(self.state.exists())
+
+    def test_private_specs_outside_state_are_never_deleted(self):
+        private = self.root / 'elsewhere'
+        spec = self.enable_private_specs(private)
+        self.registry()
+        result = self.registry('cleanup', answer='y\n')
+        self.assertIn('retained record', result.stdout + result.stderr)
+        self.assertEqual(spec.read_text(), 'private')
+        self.assertEqual(self.git('-C', str(self.project), 'config', '--get', 'ndd.specsRoot').stdout.strip(),
+                         private.as_posix())
+        self.assertEqual(len(self.records()), 1)
 
     def test_registration_reuse_and_confirmed_prefix_update(self):
         self.registry()

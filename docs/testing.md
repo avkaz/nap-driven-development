@@ -93,7 +93,8 @@ checks cannot prove them:
 - Context already established is reused, while changed files/assumptions are
   rechecked. Passing checks are reused only for unchanged relevant inputs;
   required final checks still run. Record actual commands to check repetition.
-- Spec/plan are shown once for approval. Results contain concise evidence and
+- Spec/plan are offered for approval as a file path plus at most five key points,
+  not pasted into chat. Results contain concise evidence and
   limitations rather than repeated summaries. Resume preserves earlier progress.
 
 The example consistency test covers both compact task-based AC references and

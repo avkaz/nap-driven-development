@@ -89,7 +89,8 @@ one-line and expanded tasks.
 
 Spec creation inspects current behaviour; planning explores implementation details.
 Implementation reuses those findings and rechecks changed files and assumptions.
-Each document is shown once for approval, without a duplicate summary.
+Saved specs and plans are not pasted into chat: the agent gives the file path and
+a few key points for approval. Ask for a section if you want it in chat.
 
 ## Investigation when needed
 

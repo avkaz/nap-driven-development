@@ -64,8 +64,9 @@ If a legacy manifest exists, follow the [existing-project guidance](../ndd-setup
 5. Synchronize the relevant existing overview entry after saving the spec and
    after subsequent approval/status changes, following the shared rules. Do not
    create missing project documents or promote a capability to done from a draft.
-6. Show the short spec once (or the changed parts when revising), without a
-   duplicate summary, and ask for review. When ready for approval, offer
+6. Do not paste the saved spec into chat. Give its path and at most five short
+   points: scope, key acceptance criteria and open questions (when revising, the
+   changed parts only). Paste a section only if the user asks. Ask for review. When ready for approval, offer
    "Approve spec and continue with Plan <id>", "Approve spec only", and
    "Request changes". Substitute the resolved qualified ID (e.g. `ak-001`),
    or the project-relative spec path when needed to avoid ambiguity. Use the

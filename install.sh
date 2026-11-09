@@ -40,7 +40,8 @@ Without a target, detect existing agent directories; if none exist, use --all
 or choose one agent explicitly. Existing NDD skills, including local edits,
 are replaced automatically. Successful installs retain no backups. Receipts
 live beside each skills folder in <skills-directory>.ndd-kit. Full uninstall
-also clears registered ndd.prefix settings from ~/.ndd/projects (override root with NDD_STATE_DIR).
+also clears registered ndd.prefix settings from ~/.ndd/projects (override root with NDD_STATE_DIR)
+and private specs settings, asking before it deletes each private specs folder.
 HELP
 }
 fail() { echo "Error: $*" >&2; exit 1; }

@@ -111,7 +111,8 @@ Report briefly what changed, what was verified and what remains unresolved,
 with a suggested commit message. Do not repeat the spec/plan or narrate routine steps.
 Do not commit, push, deploy, change shared data or run production workflows
 unless separately authorized. Recommend committing code and its spec/plan
-updates together. Stop after the requested task(s).
+updates together; with [private specs](../ndd-setup/references/private-specs.md),
+recommend committing only the code. Stop after the requested task(s).
 
 When a diagram helps explain a change or a blocker, use the
 [rounded Unicode diagram style](../ndd-setup/references/diagrams.md).

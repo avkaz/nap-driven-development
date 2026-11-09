@@ -15,7 +15,7 @@ Check readiness for the explicitly invoked NDD workflow and confirm a personal
 feature prefix. Inspection is read-only; after confirmation, save the prefix
 in local Git config and register the project in the shared NDD registry. Do not
 create instruction blocks, imports, project templates, a manifest or an empty
-specs folder. Task documents start with `ndd-spec`; optional project documents
+specs folder; only confirmed private mode creates its folder and link. Task documents start with `ndd-spec`; optional project documents
 start with `ndd-init`.
 Invoke `ndd-setup` without flags.
 
@@ -63,6 +63,14 @@ confirmed choice, then use the bundled registry helper as described in the prefi
 reference. Reuse an existing valid choice without rewriting Git config, and
 register it if missing. Report registration failures as incomplete setup.
 
+## Choose shared or private specs
+
+Follow [private specs](references/private-specs.md). On the first setup in a Git
+repository, ask whether specs are shared (committed with the code, the default)
+or private (kept outside the repository on this machine). Private mode saves
+`ndd.specsRoot`, adds a local exclude line and an `ndd-specs` link. Repeat setup
+restores a missing link or exclude line without asking again.
+
 ## Resolve actual conflicts
 
 Distinguish blocking contradictions from optional preferences. If the project's
@@ -87,6 +95,7 @@ State:
 - whether NDD is ready, blocked, or partially unverified;
 - which installed templates and output location will be used;
 - the confirmed prefix and whether it was saved locally, reused or is session-only;
+- shared or private specs, with the private folder and link status;
 - any actual conflict and unresolved checks;
 - exact changes, including registry status, or that nothing was written;
 - the next invocation: `ndd-spec <idea>` for a task, or optional `ndd-init` to

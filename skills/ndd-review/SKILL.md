@@ -107,7 +107,8 @@ report in chat. If a report already exists, offer **replace**, **extend**, or
 **do not save**; a generic yes does not authorize replacing existing content.
 No answer means no write. For a confirmed save, use the bundled
 [report template](assets/review.md) and follow the
-[report update rules](references/report-updates.md). Missing saving resources
+[report update rules](references/report-updates.md). After saving, give the path
+only; do not repeat the report. Missing saving resources
 leave the report in chat with an incomplete-installation notice.
 
 When a diagram helps explain a finding, use the

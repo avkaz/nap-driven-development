@@ -7,10 +7,11 @@ Keep established `specs/` or custom roots; do not create a second project folder
 under the new default. If a standalone task path does not establish that
 directory, use the project's known specs root; do not invent a second overview.
 If the location is ambiguous or occupied by unrelated content, ask for the
-intended location. Keep files inside the project and do not write through links.
+intended location. Keep files inside the project, or inside the
+[private specs](private-specs.md) folder, and do not write through links.
 Resolve task links relative to the overview file. Before reading linked task
 documents or passing a path to a digest helper, reject external URLs, paths
-escaping the project and symlinks escaping it. Report unsafe or missing targets
+escaping the project (or the private folder) and symlinks escaping it. Report unsafe or missing targets
 as unresolved references rather than following them or deleting the entry.
 
 All three files are optional and independent. Do not create them during setup,
@@ -36,8 +37,8 @@ unless the user explicitly requests another. Interface language is a product
 requirement, not automatically the chat language. Fixed English help is unchanged.
 Reference existing `AGENTS.md`/`CLAUDE.md` conventions rather than duplicating
 them. A selected `rules.md` can be a short index of relative links to existing
-rule documents with their scope. Resolve these links relative to `rules.md`,
-verify targets stay inside the project, and read only sources relevant to the
+rule documents with their scope. Resolve these links relative to `rules.md`
+(from the project root for private specs), verify targets stay inside the project, and read only sources relevant to the
 current work. An index link does not turn a scoped rule into a project-wide rule.
 Report missing or unreadable relevant sources; do not invent their contents.
 Already applicable global/ancestor instructions still apply in place and need
